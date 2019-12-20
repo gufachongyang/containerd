@@ -259,12 +259,12 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 		if err != nil {
 			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
 		}
-		if ppid == "1" {
-			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
-			unix.Kill(p.pid, syscall.SIGKILL)
-			if err != nil && err != syscall.ESRCH {
-				return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
-			}
+		//if ppid == "1" {
+		//	logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
+		//	unix.Kill(p.pid, syscall.SIGKILL)
+		//	if err != nil && err != syscall.ESRCH {
+		//		return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
+		//	}
 
 			// wait for the process to die
 			for {
@@ -277,7 +277,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			// Create the file so we get the exit event generated once monitor kicks in
 			// without having to go through all this process again
 			return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
-		}
+		//}
 
 		return rst, rerr
 	}
