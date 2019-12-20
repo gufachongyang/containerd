@@ -237,7 +237,11 @@ func (p *process) updateExitStatusFile(status uint32) (uint32, error) {
 }
 
 func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
+	logrus.Info("Yastar test> handleSigkilledShim")
+
 	if p.cmd == nil || p.cmd.Process == nil {
+		logrus.Info("Yastar test!")
+
 		e := unix.Kill(p.pid, 0)
 		if e == syscall.ESRCH {
 			logrus.Warnf("containerd: %s:%s (pid %d) does not exist", p.container.id, p.id, p.pid)
