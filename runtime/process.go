@@ -259,10 +259,10 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		ppid, err := readProcStatField(p.pid, 4)
-		if err != nil {
-			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		}
+		//ppid, err := readProcStatField(p.pid, 4)
+		//if err != nil {
+		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		//}
 		//if ppid == "1" {
 		//	logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 		//	unix.Kill(p.pid, syscall.SIGKILL)
