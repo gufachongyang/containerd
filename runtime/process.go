@@ -255,11 +255,11 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		ppid, err := readProcStatField(p.pid, 4)
-		if err != nil {
-			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		}
-		if ppid == "1" {
+		//ppid, err := readProcStatField(p.pid, 4)
+		//if err != nil {
+		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		//}
+		//if ppid == "1" {
 			logrus.Info("hyx custom handleSigkilledShim")
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
@@ -274,10 +274,10 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 				s, err1 = p.container.Status()
 			}
 
-			unix.Kill(p.pid, syscall.SIGKILL)
-			if err != nil && err != syscall.ESRCH {
-				return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
-			}
+			//unix.Kill(p.pid, syscall.SIGKILL)
+			//if err != nil && err != syscall.ESRCH {
+			//	return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
+			//}
 			if p.container != nil {
 				if err1 == nil && s == Paused {
 					p.container.Resume()
@@ -295,7 +295,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			// Create the file so we get the exit event generated once monitor kicks in
 			// without having to go through all this process again
 			return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
-		}
+		//}
 
 		return rst, rerr
 	}
