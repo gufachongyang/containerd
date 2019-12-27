@@ -306,7 +306,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
 		//}
 
-		return rst, rerr
+		//return rst, rerr
 	}
 
 	// The shim was SIGKILLED
