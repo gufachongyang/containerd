@@ -237,11 +237,7 @@ func (p *process) updateExitStatusFile(status uint32) (uint32, error) {
 }
 
 func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
-	logrus.Info("Yastar test> handleSigkilledShim")
-
 	if p.cmd == nil || p.cmd.Process == nil {
-		logrus.Info("Yastar test!")
-
 		e := unix.Kill(p.pid, 0)
 		if e == syscall.ESRCH {
 			logrus.Warnf("containerd: %s:%s (pid %d) does not exist", p.container.id, p.id, p.pid)
@@ -259,16 +255,34 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		//ppid, err := readProcStatField(p.pid, 4)
-		//if err != nil {
-		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		//}
-		//if ppid == "1" {
-		//	logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
-		//	unix.Kill(p.pid, syscall.SIGKILL)
-		//	if err != nil && err != syscall.ESRCH {
-		//		return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
-		//	}
+		ppid, err := readProcStatField(p.pid, 4)
+		if err != nil {
+			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		}
+		if ppid == "1" {
+			logrus.Info("hyx custom handleSigkilledShim")
+			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
+			// Before sending SIGKILL to container, we need to make sure
+			// the container is not in Paused state. If the container is
+			// Paused, the container will not response to any signal
+			// we should Resume it after sending SIGKILL
+			var (
+				s    State
+				err1 error
+			)
+			if p.container != nil {
+				s, err1 = p.container.Status()
+			}
+
+			unix.Kill(p.pid, syscall.SIGKILL)
+			if err != nil && err != syscall.ESRCH {
+				return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
+			}
+			if p.container != nil {
+				if err1 == nil && s == Paused {
+					p.container.Resume()
+				}
+			}
 
 			// wait for the process to die
 			for {
@@ -281,19 +295,28 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			// Create the file so we get the exit event generated once monitor kicks in
 			// without having to go through all this process again
 			return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
-		//}
+		}
 
 		return rst, rerr
 	}
 
-	// Possible that the shim was SIGKILLED
-	e := unix.Kill(p.cmd.Process.Pid, 0)
-	if e != syscall.ESRCH {
-		return rst, rerr
+	// The shim was SIGKILLED
+	// We should get the container state first
+	// to make sure the container is not in
+	// Pause state, if it's Paused, we should resume it
+	// and it will exit immediately because shim will send sigkill to
+	// container when died.
+	s, err1 := p.container.Status()
+	if err1 == nil && s == Paused {
+		p.container.Resume()
 	}
 
 	// Ensure we got the shim ProcessState
-	<-p.cmdDoneCh
+	select {
+	case <-p.cmdDoneCh:
+	case <-time.After(2 * time.Minute):
+		return rst, fmt.Errorf("could not get the shim ProcessState within two minutes")
+	}
 
 	shimStatus := p.cmd.ProcessState.Sys().(syscall.WaitStatus)
 	if shimStatus.Signaled() && shimStatus.Signal() == syscall.SIGKILL {
