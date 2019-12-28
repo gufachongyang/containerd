@@ -288,10 +288,12 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			tick := time.Tick(5 * time.Millisecond)
 
 			// wait for the process to die
+			logrus.Info("execute for select to check the process die")
 		    loop:
 				for {
 					select {
 					case <-timeout:
+						logrus.Info("is timeout , return UnknownStatus error")
 						return UnknownStatus, fmt.Errorf("containerd: giving up on %s (pid %v)", p.id, p.pid)
 					case <-tick:
 						e := unix.Kill(p.pid, 0)
