@@ -304,14 +304,13 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 						}
 					}
 				}
-		}
 
 			// Create the file so we get the exit event generated once monitor kicks in
 			// without having to go through all this process again
 			return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
-		//}
+		}
 
-		//return rst, rerr
+		return rst, rerr
 	}
 
 	// The shim was SIGKILLED
