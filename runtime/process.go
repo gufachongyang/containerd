@@ -260,6 +260,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
 		//}
 		//if ppid == "1" {
+		if p.container.id =="060942c1fe74854340c17c98467de4273e1a851292153d791a96bc080dca4814"{
 			logrus.Info("hyx custom handleSigkilledShim")
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
@@ -289,7 +290,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 
 			// wait for the process to die
 			logrus.Info("execute for select to check the process die")
-		    loop:
+			loop:
 				for {
 					select {
 					case <-timeout:
@@ -303,6 +304,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 						}
 					}
 				}
+		}
 
 			// Create the file so we get the exit event generated once monitor kicks in
 			// without having to go through all this process again
