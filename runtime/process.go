@@ -255,14 +255,12 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		//ppid, err := readProcStatField(p.pid, 4)
-		//if err != nil {
-		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		//}
-		//if ppid == "1" {
-		logrus.Info("handleSigkilledShim, containerd: %s", p.container.id)
-		if p.container.id =="22267e7f0ed59704eb2b2b60750d5971e54757b916ae8a671021010af2e49d04"{
-			logrus.Info("hyx custom handleSigkilledShim")
+		ppid, err := readProcStatField(p.pid, 4)
+		if err != nil {
+			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		}
+		if ppid == "1" {
+			logrus.Info("hyx custom handleSigkilledShim, containerd: %s", p.container.id)
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
 			// the container is not in Paused state. If the container is
@@ -276,10 +274,10 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 				s, err1 = p.container.Status()
 			}
 
-			//unix.Kill(p.pid, syscall.SIGKILL)
-			//if err != nil && err != syscall.ESRCH {
-			//	return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
-			//}
+			unix.Kill(p.pid, syscall.SIGKILL)
+			if err != nil && err != syscall.ESRCH {
+				return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
+			}
 			if p.container != nil {
 				if err1 == nil && s == Paused {
 					p.container.Resume()
@@ -295,9 +293,8 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 				for {
 					select {
 					case <-timeout:
-						logrus.Info("is timeout , return UnknownStatus error")
+						logrus.Info("is timeout, and then return")
 						return rst, rerr
-						//return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
 					case <-tick:
 						e := unix.Kill(p.pid, 0)
 						if e == syscall.ESRCH {
