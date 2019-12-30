@@ -238,6 +238,8 @@ func (p *process) updateExitStatusFile(status uint32) (uint32, error) {
 
 func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 	if p.cmd == nil || p.cmd.Process == nil {
+		logrus.Info("hyx custom handleSigkilledShim start")
+
 		e := unix.Kill(p.pid, 0)
 		if e == syscall.ESRCH {
 			logrus.Warnf("containerd: %s:%s (pid %d) does not exist", p.container.id, p.id, p.pid)
@@ -255,13 +257,12 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		//ppid, err := readProcStatField(p.pid, 4)
-		//if err != nil {
-		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		//}
-		//if ppid == "1" {
-		if p.container.id == "a51ecae939e96f0dd6922db95053a05327299811c64b7e300f5e05aee1edd239"{
-			logrus.Info("hyx custom handleSigkilledShim")
+		ppid, err := readProcStatField(p.pid, 4)
+		if err != nil {
+			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		}
+		if ppid == "1" {
+			logrus.Info("hyx custom handleSigkilledShim execute")
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
 			// the container is not in Paused state. If the container is
