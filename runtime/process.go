@@ -238,8 +238,6 @@ func (p *process) updateExitStatusFile(status uint32) (uint32, error) {
 
 func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 	if p.cmd == nil || p.cmd.Process == nil {
-		logrus.Info("hyx custom handleSigkilledShim start")
-
 		e := unix.Kill(p.pid, 0)
 		if e == syscall.ESRCH {
 			logrus.Warnf("containerd: %s:%s (pid %d) does not exist", p.container.id, p.id, p.pid)
@@ -257,12 +255,14 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		ppid, err := readProcStatField(p.pid, 4)
-		if err != nil {
-			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		}
-		if ppid == "1" {
-			logrus.Info("hyx custom handleSigkilledShim execute")
+		//ppid, err := readProcStatField(p.pid, 4)
+		//if err != nil {
+		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		//}
+		//if ppid == "1" {
+		logrus.Info("handleSigkilledShim, containerd: %s", p.container.id)
+		if p.container.id =="ddae03c813075543401d5d5f407baf1e7bf671870648e54b5456a1a0a58db012"{
+			logrus.Info("hyx custom handleSigkilledShim")
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
 			// the container is not in Paused state. If the container is
@@ -291,20 +291,20 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 
 			// wait for the process to die
 			logrus.Info("execute for select to check the process die")
-			loop:
-				for {
-					select {
-					case <-timeout:
-						logrus.Info("is timeout , return UnknownStatus error")
-						// return UnknownStatus, fmt.Errorf("containerd: giving up on %s (pid %v)", p.id, p.pid)
-						return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
-					case <-tick:
-						e := unix.Kill(p.pid, 0)
-						if e == syscall.ESRCH {
-							break loop
-						}
+		loop:
+			for {
+				select {
+				case <-timeout:
+					logrus.Info("is timeout , return UnknownStatus error")
+					// return UnknownStatus, fmt.Errorf("containerd: giving up on %s (pid %v)", p.id, p.pid)
+					return p.updateExitStatusFile(128 + uint32(syscall.SIGKILL))
+				case <-tick:
+					e := unix.Kill(p.pid, 0)
+					if e == syscall.ESRCH {
+						break loop
 					}
 				}
+			}
 
 			// Create the file so we get the exit event generated once monitor kicks in
 			// without having to go through all this process again
