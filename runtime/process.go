@@ -260,7 +260,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
 		//}
 		//if ppid == "1" {
-		if p.container.id == "7e4c30760dabbe53ee5214883be9e32e7361f26ac8cf282d7b3fdd1328891ec8"{
+		if p.container.id == "9762a55747beb979bba31cf48b46ec6dfe161318935f6f1988b43dbe4804184c"{
 			logrus.Info("hyx custom handleSigkilledShim")
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
