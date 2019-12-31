@@ -255,12 +255,14 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 			return p.updateExitStatusFile(UnknownStatus)
 		}
 
-		ppid, err := readProcStatField(p.pid, 4)
-		if err != nil {
-			return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
-		}
-		if ppid == "1" {
-			logrus.Info("hyx custom handleSigkilledShim, containerd: %s", p.container.id)
+		//ppid, err := readProcStatField(p.pid, 4)
+		//if err != nil {
+		//	return rst, fmt.Errorf("could not check process ppid: %v (%v)", err, rerr)
+		//}
+		//if ppid == "1" {
+		logrus.Info("handleSigkilledShim, containerd: %s", p.container.id)
+		if p.container.id =="1433b128dc3ecf48320501459b3c542458c743e874b5cb09a491977ae898e30e"{
+			logrus.Info("hyx custom handleSigkilledShim")
 			logrus.Warnf("containerd: %s:%s shim died, killing associated process", p.container.id, p.id)
 			// Before sending SIGKILL to container, we need to make sure
 			// the container is not in Paused state. If the container is
@@ -274,10 +276,10 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 				s, err1 = p.container.Status()
 			}
 
-			unix.Kill(p.pid, syscall.SIGKILL)
-			if err != nil && err != syscall.ESRCH {
-				return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
-			}
+			//unix.Kill(p.pid, syscall.SIGKILL)
+			//if err != nil && err != syscall.ESRCH {
+			//	return UnknownStatus, fmt.Errorf("containerd: unable to SIGKILL %s:%s (pid %v): %v", p.container.id, p.id, p.pid, err)
+			//}
 			if p.container != nil {
 				if err1 == nil && s == Paused {
 					p.container.Resume()
@@ -293,7 +295,7 @@ func (p *process) handleSigkilledShim(rst uint32, rerr error) (uint32, error) {
 				for {
 					select {
 					case <-timeout:
-						logrus.Info("is timeout, and then return")
+						logrus.Info("is timeout , return UnknownStatus error")
 						return rst, rerr
 					case <-tick:
 						e := unix.Kill(p.pid, 0)
